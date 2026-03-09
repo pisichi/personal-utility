@@ -1,0 +1,100 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* Generic Retro Theme - Not Win95 */
+
+:root {
+  --color-retro-bg: #282c34; /* Dark charcoal */
+  --color-retro-text: #abb2bf; /* Light gray */
+  --color-retro-primary: #61afef; /* Muted blue */
+  --color-retro-secondary: #c678dd; /* Muted purple */
+  --color-retro-border: #3e4451; /* Darker gray */
+  --color-retro-input-bg: #1e2127; /* Very dark gray */
+  --color-retro-button-bg: #3e4451; /* Darker gray */
+  --color-retro-button-hover: #4b5263; /* Slightly lighter gray */
+
+  /* Standard UI sizes */
+  --editor-height: 500px;
+  --input-height: 2.5rem;
+  --button-padding: 0.5rem 1rem;
+  --margin-standard: 0.75rem;
+  --gap-standard: 1rem;
+}
+
+body {
+  font-family: "Roboto Mono", monospace; /* A common retro/dev font */
+  background-color: var(--color-retro-bg);
+  color: var(--color-retro-text);
+  margin: 0;
+  padding: 0;
+}
+
+/* Basic overrides for common elements */
+button,
+select,
+input,
+textarea {
+  background-color: var(--color-retro-input-bg);
+  color: var(--color-retro-text);
+  border: 1px solid var(--color-retro-border);
+  padding: var(--button-padding);
+  border-radius: 3px;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+button {
+  background-color: var(--color-retro-button-bg);
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: var(--color-retro-button-hover);
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+  border-color: var(--color-retro-primary);
+  box-shadow: 0 0 0 2px rgba(97, 175, 239, 0.3); /* Focus ring */
+}
+
+/* Editor container defaults */
+.editor-wrapper {
+  width: 100%;
+  height: var(--editor-height);
+  overflow: auto;
+}
+
+/* Global Scrollbar Styles */
+/* For WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px; /* width of the entire scrollbar */
+  height: 8px; /* height of the entire scrollbar (for horizontal) */
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-retro-input-bg); /* color of the tracking area */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--color-retro-button-bg); /* color of the scroll thumb */
+  border-radius: 10px; /* roundness of the scroll thumb */
+  border: 2px solid var(--color-retro-input-bg); /* creates padding around scroll thumb */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-retro-button-hover); /* color of the scroll thumb on hover */
+}
+
+/* For Firefox */
+/* Using `html` and `body` to target global scrollbars */
+html,
+body {
+  scrollbar-width: thin; /* "auto" or "thin" */
+  scrollbar-color: var(--color-retro-button-bg) var(--color-retro-input-bg); /* thumb and track color */
+}

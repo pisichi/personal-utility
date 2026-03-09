@@ -1,0 +1,10 @@
+---
+import MainLayout from '../layouts/MainLayout.astro';
+import Converter from '../features/converter/Converter.svelte';
+---
+
+<MainLayout title="Text Converter">
+  <div>
+    <Converter client:load />
+  </div>
+</MainLayout>
