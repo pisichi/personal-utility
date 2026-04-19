@@ -12,8 +12,8 @@ test("Formatter component includes correct logic and structure", () => {
   const file = readFileSync(resolve(__dirname, "../features/formatter/Formatter.svelte"), "utf-8");
   expect(file).toMatch(/flex-1/);
   expect(file).toMatch(/detectFormatType/);
-  expect(file).toMatch(/function validateXml/);
-  expect(file).toMatch(/option value="auto"/);
+  expect(file).toMatch(/import { validateXml, formatXmlWithOrgMsg } from/);
+  expect(file).toMatch(/formats\.find/);
   expect(file).toMatch(/dispatch\('update'/);
   expect(file).toMatch(/errorMessage/);
   expect(file).toMatch(/syntaxError/);

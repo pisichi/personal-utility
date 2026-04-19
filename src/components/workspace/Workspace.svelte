@@ -9,7 +9,7 @@
 
   const STORAGE_KEY = 'personal-utility-v3';
 
-  // Svelte 5 runes for guaranteed reactivity
+
   let state = $state<WorkspaceState>(createInitialState());
   let isLoaded = $state(false);
 
@@ -36,7 +36,6 @@
     isLoaded = true;
   });
 
-  // Effect handles all persistence automatically
   $effect(() => {
     if (isLoaded) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({

@@ -27,14 +27,13 @@
     }
   }
 
-  // Reactive language update
   $: if (view && lang) {
     view.dispatch({
       effects: languageCompartment.reconfigure(getLanguageExtension(lang))
     });
   }
 
-  // Reactive value update from parent
+
   $: if (view && value !== view.state.doc.toString()) {
     view.dispatch({
       changes: { from: 0, to: view.state.doc.length, insert: value }

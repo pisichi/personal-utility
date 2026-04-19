@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { Menu } from 'lucide-svelte';
 
   let isMenuOpen = false;
 
@@ -32,10 +33,8 @@
       </div>
 
       <div class="-mr-2 flex md:hidden">
-        <button on:click={toggleMenu} type="button" class="inline-flex items-center justify-center p-2 text-zinc-400 hover:text-white transition-colors">
-          <svg class="block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+        <button on:click={toggleMenu} type="button" class="inline-flex items-center justify-center p-2 text-zinc-400 hover:text-white transition-colors" aria-label="Open menu">
+          <Menu size={16} strokeWidth={1.5} />
         </button>
       </div>
     </div>

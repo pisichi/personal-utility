@@ -109,7 +109,6 @@
       />
     </div>
   {:else if node.children}
-    <!-- First Child - REMOVED TRANSITION FOR INSTANT RESIZING -->
     <div 
       class="min-h-0 min-w-0" 
       style="{node.direction === 'vertical' ? `width: ${node.percentage}%` : `height: ${node.percentage}%`}"
@@ -142,7 +141,7 @@
                   {node.direction === 'vertical' ? 'w-[1px] h-12' : 'h-[1px] w-12'}"></div>
     </button>
 
-    <!-- Second Child -->
+
     <div class="flex-1 min-h-0 min-w-0">
       <svelte:self 
         node={node.children[1]} 

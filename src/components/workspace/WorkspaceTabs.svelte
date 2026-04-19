@@ -13,26 +13,19 @@
 
   let editingTabId: string | null = null;
 
-  function reset() {
-    if (confirm("Reset layout to default?")) {
-      localStorage.removeItem('personal-utility-v3');
-      window.location.reload();
-    }
-  }
-
   function focusOnInit(node: HTMLInputElement) {
     node.focus();
   }
 </script>
 
-<div class="flex items-center bg-[#09090b] border-b border-zinc-800 px-3 h-10 overflow-hidden select-none shrink-0" role="tablist" aria-label="Workspace tabs">
+<div class="flex items-end bg-[#09090b] border-b border-zinc-700 px-3 h-10 overflow-hidden select-none shrink-0" role="tablist" aria-label="Workspace tabs">
   <!-- Brand -->
-  <div class="flex items-center pr-4 border-r border-zinc-800 mr-2 h-full">
-    <span class="text-[10px] font-black text-zinc-100 tracking-[0.25em] uppercase">Utility::Toolkit</span>
+  <div class="flex items-center pr-4 border-r border-zinc-800 mr-3 h-full">
+    <span class="text-xs font-black text-zinc-300 tracking-[0.1em] uppercase">Utility::Toolkit</span>
   </div>
 
-  <!-- Tabs -->
-  <div class="flex-1 flex items-end h-full overflow-x-auto no-scrollbar space-x-1">
+
+  <div class="flex-1 flex items-end h-full overflow-x-auto no-scrollbar space-x-[1px]">
     {#each tabs as tab (tab.id)}
       <div 
         animate:flip={{ duration: 300, easing: quintOut }}
@@ -44,10 +37,10 @@
         on:click={() => dispatch('select', tab.id)}
         on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && dispatch('select', tab.id)}
         on:dblclick={() => editingTabId = tab.id}
-        class="flex items-center h-8 px-3 rounded-t-md border-x border-t transition-all cursor-pointer min-w-[100px] max-w-[180px] group outline-none
+        class="flex items-center h-8 px-4 rounded-t-sm border-x border-t transition-all cursor-pointer min-w-[120px] max-w-[200px] group outline-none relative
                {tab.id === activeTabId 
-                 ? 'bg-[#121214] border-zinc-700 text-zinc-100 z-10' 
-                 : 'bg-transparent border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/30'}"
+                 ? 'bg-[#121214] border-zinc-700 text-zinc-100 z-10 bottom-[-1px] pb-[1px]' 
+                 : 'bg-zinc-900/50 border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'}"
       >
         {#if editingTabId === tab.id}
           <input 
@@ -62,41 +55,35 @@
               if (e.key === 'Enter') e.currentTarget.blur();
               if (e.key === 'Escape') editingTabId = null;
             }}
-            class="bg-zinc-800 text-zinc-100 text-[10px] font-bold uppercase tracking-wider outline-none w-full px-1 rounded-sm border border-[#F5A623]"
+            class="bg-zinc-800 text-zinc-100 text-xs font-bold uppercase tracking-wider outline-none w-full px-1 rounded-sm border border-zinc-500"
             aria-label="Rename tab"
           />
         {:else}
-          <span class="text-[10px] font-bold uppercase tracking-widest truncate flex-1 pointer-events-none">
+          <span class="text-xs font-bold uppercase tracking-widest truncate flex-1 pointer-events-none">
             {tab.name}
           </span>
           {#if tabs.length > 1}
             <button 
               on:click|stopPropagation={() => dispatch('remove', tab.id)}
-              class="ml-2 p-0.5 bg-transparent border-none text-zinc-500 hover:text-red-500 transition-all flex items-center justify-center shrink-0"
+              class="ml-2 p-0.5 bg-transparent border-none text-zinc-500 hover:text-zinc-200 transition-all flex items-center justify-center shrink-0"
               aria-label="Close tab"
               title="Close Tab"
             >
-              <X size={12} strokeWidth={2.5} class="shrink-0" />
+              <X size={12} strokeWidth={2.5} aria-hidden="true" />
             </button>
           {/if}
         {/if}
       </div>
     {/each}
 
-    <!-- Add Tab Button -->
     <button 
       on:click={() => dispatch('add')}
-      class="flex items-center justify-center h-7 w-7 mb-1 ml-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-[#F5A623] transition-all shrink-0 shadow-sm border border-zinc-700 active:scale-90"
+      class="flex items-center justify-center h-8 w-8 mb-0 ml-1 rounded-t-sm hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200 transition-all shrink-0 cursor-pointer"
       aria-label="Add new workspace tab"
       title="New Workspace"
     >
-      <Plus size={16} strokeWidth={2.5} class="shrink-0" />
+      <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
     </button>
-  </div>
-
-  <!-- Global Actions -->
-  <div class="flex items-center pl-4 border-l border-zinc-800 ml-2 h-full space-x-3">
-    <button on:click={reset} class="text-[9px] font-bold text-zinc-600 hover:text-red-400 uppercase tracking-widest transition-colors">Reset</button>
   </div>
 </div>
 

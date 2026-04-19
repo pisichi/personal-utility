@@ -98,31 +98,31 @@
 </script>
 
 <div class="space-y-4 h-full flex flex-col min-h-0">
-  <div class="flex justify-between items-center border-b border-zinc-800 pb-2 shrink-0">
+  <div class="flex justify-between items-center border-b border-zinc-800 pb-3 shrink-0">
     <div class="flex space-x-4">
-      <div class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest opacity-60">
+      <div class="text-xs font-bold text-zinc-400 uppercase tracking-widest opacity-80">
         Left: {detectFormatType(original).toUpperCase()}
       </div>
-      <div class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest opacity-60">
+      <div class="text-xs font-bold text-zinc-400 uppercase tracking-widest opacity-80">
         Right: {detectFormatType(modified).toUpperCase()}
       </div>
     </div>
-    <div class="flex space-x-2">
-      <button on:click={swap} title="Swap Sides" aria-label="Swap sides" class="flex items-center space-x-1 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-white bg-blue-600 hover:bg-blue-500 transition-colors rounded-sm shadow-sm">
+    <div class="flex space-x-3">
+      <button on:click={swap} title="Swap Sides" aria-label="Swap sides" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-sm shadow-sm border border-zinc-700 cursor-pointer">
         <span>Swap</span>
       </button>
-      <button on:click={clearAll} title="Clear All" aria-label="Clear all content" class="flex items-center space-x-1 px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors rounded-sm">
+      <button on:click={clearAll} title="Clear All" aria-label="Clear all content" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-sm border border-zinc-700 shadow-sm cursor-pointer">
         <span>Clear</span>
       </button>
     </div>
   </div>
 
-  <div class="grid grid-cols-2 gap-4 mb-3 shrink-0">
-    <h2 class="text-[10px] font-bold text-amber-500 uppercase tracking-widest opacity-80 text-center border-b border-amber-900/30 pb-1">Original Source</h2>
-    <h2 class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest opacity-80 text-center border-b border-emerald-900/30 pb-1">Modified Result</h2>
+  <div class="grid grid-cols-2 gap-4 mb-2 shrink-0">
+    <h2 class="text-sm font-bold text-zinc-300 uppercase tracking-widest opacity-80 text-center border-b border-zinc-800 pb-2">Original Source</h2>
+    <h2 class="text-sm font-bold text-zinc-300 uppercase tracking-widest opacity-80 text-center border-b border-zinc-800 pb-2">Modified Result</h2>
   </div>
   
-  <div bind:this={editorEl} class="border border-zinc-800 rounded-sm w-full bg-zinc-900 flex-1 overflow-hidden min-h-0 shadow-inner"></div>
+  <div bind:this={editorEl} class="border border-zinc-700 rounded-sm w-full bg-[#282c34] flex-1 overflow-hidden min-h-0 shadow-inner"></div>
 </div>
 
 <style>
@@ -138,6 +138,7 @@
   }
   :global(.cm-editor) {
     height: 100% !important;
+    background-color: transparent !important;
   }
   :global(.cm-scroller) {
     overflow: auto !important;
