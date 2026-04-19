@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { onMount, afterUpdate } from 'svelte';
-  import { EditorView, basicSetup } from 'codemirror';
+  import { onMount, onDestroy } from 'svelte';
+  import { EditorView, keymap, lineNumbers, highlightActiveLineGutter, highlightSpecialChars, drawSelection, dropCursor, rectangularSelection, crosshairCursor, highlightActiveLine, scrollPastEnd } from '@codemirror/view';
   import { EditorState, Compartment } from '@codemirror/state';
+  import { foldGutter, indentOnInput, syntaxHighlighting, defaultHighlightStyle, bracketMatching, foldKeymap } from '@codemirror/language';
+  import { history, defaultKeymap, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { javascript } from '@codemirror/lang-javascript';
   import { xml } from '@codemirror/lang-xml';
-  import { json } from '@codemirror/lang-json'; // Import the json extension
+  import { json } from '@codemirror/lang-json';
   import { oneDark } from '@codemirror/theme-one-dark';
 
   export let value: string = '';
@@ -13,67 +15,104 @@
   export let id: string | undefined = undefined;
 
   let editorEl: HTMLElement;
-  let view: EditorView;
+  let view: EditorView | undefined;
   const languageCompartment = new Compartment();
 
   function getLanguageExtension(language: string) {
     switch (language) {
-      case 'javascript':
-        return javascript();
-      case 'xml':
-        return xml();
-      case 'json': // Added json case
-        return json();
-      default:
-        return [];
+      case 'javascript': return javascript();
+      case 'xml': return xml();
+      case 'json': return json();
+      default: return [];
     }
   }
 
+  // Reactive language update
   $: if (view && lang) {
     view.dispatch({
       effects: languageCompartment.reconfigure(getLanguageExtension(lang))
     });
   }
 
+  // Reactive value update from parent
+  $: if (view && value !== view.state.doc.toString()) {
+    view.dispatch({
+      changes: { from: 0, to: view.state.doc.length, insert: value }
+    });
+  }
+
   onMount(() => {
-    const initialExtensions = [
-      basicSetup,
+    const extensions = [
+      lineNumbers(),
+      highlightActiveLineGutter(),
+      highlightSpecialChars(),
+      history(),
+      foldGutter(),
+      drawSelection(),
+      dropCursor(),
+      EditorState.allowMultipleSelections.of(true),
+      indentOnInput(),
+      syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+      bracketMatching(),
+      rectangularSelection(),
+      crosshairCursor(),
+      highlightActiveLine(),
+      keymap.of([
+        ...defaultKeymap,
+        ...historyKeymap,
+        ...foldKeymap,
+        indentWithTab
+      ]),
       EditorView.updateListener.of(update => {
         if (update.docChanged) {
-          value = update.state.doc.toString();
+          const newValue = update.state.doc.toString();
+          if (newValue !== value) {
+            value = newValue;
+          }
         }
       }),
-      languageCompartment.of(getLanguageExtension(lang)), // Set initial language
+      languageCompartment.of(getLanguageExtension(lang)),
       oneDark,
-      EditorView.lineWrapping // wrap long lines to avoid horizontal scroll
+      EditorView.lineWrapping,
+      EditorView.theme({
+        "&": { height: "100%", outline: "none" },
+        ".cm-scroller": { overflow: "auto" },
+        "&.cm-focused": { outline: "none" }
+      })
     ];
 
     if (readonly) {
-      initialExtensions.push(EditorState.readOnly.of(true));
+      extensions.push(EditorState.readOnly.of(true));
     }
 
-    const state = EditorState.create({
-      doc: value,
-      extensions: initialExtensions,
-    });
-
     view = new EditorView({
-      state,
+      state: EditorState.create({
+        doc: value,
+        extensions
+      }),
       parent: editorEl,
     });
   });
 
-  afterUpdate(() => {
-    if (view && value !== view.state.doc.toString()) {
-      view.dispatch({
-        changes: { from: 0, to: view.state.doc.length, insert: value },
-      });
+  onDestroy(() => {
+    if (view) {
+      view.destroy();
+      view = undefined;
     }
   });
 </script>
 
-<div bind:this={editorEl} {id} class="border border-retro-border rounded-md w-full overflow-auto" style="height: var(--editor-height);"></div>
+<div 
+  bind:this={editorEl} 
+  {id} 
+  class="w-full h-full min-h-[300px] bg-[#282c34] flex flex-col overflow-hidden"
+></div>
 
 <style>
-  /* Removed fixed height to allow parent components to control size */
+  :global(.cm-editor) {
+    height: 100% !important;
+    width: 100% !important;
+    flex: 1;
+    min-height: 0;
+  }
 </style>

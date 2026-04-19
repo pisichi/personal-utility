@@ -1,18 +1,22 @@
 <script lang="ts">
+  import { createEventDispatcher } from 'svelte';
   import CodeEditor from '../../editors/CodeEditor.svelte';
+  import { convert } from './converter';
+
+  const dispatch = createEventDispatcher();
+
+  export let initialData: any = {};
 
   type FormatType = 'base64' | 'unicode' | 'url';
 
-  let formatType: FormatType = typeof window !== 'undefined' && localStorage.getItem('converterFormat') ? (localStorage.getItem('converterFormat') as FormatType) : 'base64';
-  
-  // Encode side
-  let encodeInput: string = typeof window !== 'undefined' ? localStorage.getItem('converterEncodeInput') || '' : '';
+  let formatType: FormatType = initialData.formatType || 'base64';
+  let encodeInput: string = initialData.encodeInput || '';
+  let decodeInput: string = initialData.decodeInput || '';
+
   let encodeOutput: string = '';
   let encodeErrorMsg: string = '';
   let encodeCopyFeedback = false;
 
-  // Decode side
-  let decodeInput: string = typeof window !== 'undefined' ? localStorage.getItem('converterDecodeInput') || '' : '';
   let decodeOutput: string = '';
   let decodeErrorMsg: string = '';
   let decodeCopyFeedback = false;
@@ -23,93 +27,42 @@
     { value: 'url', label: 'URL Encode' },
   ];
 
-  // UTF-8 safe base64 encoding/decoding
-  function utf8ToBase64(str: string): string {
-    const encoder = new TextEncoder();
-    const utf8Bytes = encoder.encode(str);
-    let binary = '';
-    for (let i = 0; i < utf8Bytes.byteLength; i++) {
-      binary += String.fromCharCode(utf8Bytes[i]);
-    }
-    return btoa(binary);
-  }
-
-  function base64ToUtf8(str: string): string {
-    const binary = atob(str);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    const decoder = new TextDecoder('utf-8');
-    return decoder.decode(bytes);
-  }
-
-  function encodeFormat(text: string, type: FormatType): string {
-    try {
-      switch (type) {
-        case 'base64':
-          return utf8ToBase64(text);
-        case 'unicode':
-          return text.split('').map(c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')).join('');
-        case 'url':
-          return encodeURIComponent(text);
-        default:
-          return '';
-      }
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Encoding failed');
-    }
-  }
-
-  function decodeFormat(text: string, type: FormatType): string {
-    try {
-      switch (type) {
-        case 'base64':
-          return base64ToUtf8(text);
-        case 'unicode':
-          return text.replace(/\\u[\dA-Fa-f]{4}/g, (match) =>
-            String.fromCharCode(parseInt(match.substring(2), 16))
-          );
-        case 'url':
-          return decodeURIComponent(text);
-        default:
-          return '';
-      }
-    } catch (error) {
-      throw new Error(error instanceof Error ? error.message : 'Decoding failed');
-    }
-  }
-
-  function copyEncode() {
-    if (encodeOutput) {
-      navigator.clipboard.writeText(encodeOutput).then(() => {
-        encodeCopyFeedback = true;
-        setTimeout(() => (encodeCopyFeedback = false), 2000);
+  function copy(text: string, side: 'encode' | 'decode') {
+    if (text) {
+      navigator.clipboard.writeText(text).then(() => {
+        if (side === 'encode') {
+          encodeCopyFeedback = true;
+          setTimeout(() => (encodeCopyFeedback = false), 2000);
+        } else {
+          decodeCopyFeedback = true;
+          setTimeout(() => (decodeCopyFeedback = false), 2000);
+        }
       });
     }
   }
 
-  function copyDecode() {
-    if (decodeOutput) {
-      navigator.clipboard.writeText(decodeOutput).then(() => {
-        decodeCopyFeedback = true;
-        setTimeout(() => (decodeCopyFeedback = false), 2000);
-      });
+  function clear(side: 'encode' | 'decode') {
+    if (side === 'encode') {
+      encodeInput = '';
+    } else {
+      decodeInput = '';
     }
   }
 
+  // Notify parent of state changes
   $: {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('converterFormat', formatType);
-      localStorage.setItem('converterEncodeInput', encodeInput);
-      localStorage.setItem('converterDecodeInput', decodeInput);
-    }
+    dispatch('update', {
+      formatType,
+      encodeInput,
+      decodeInput
+    });
   }
 
   $: {
     try {
       encodeErrorMsg = '';
-      encodeOutput = encodeFormat(encodeInput, formatType);
+      const type = `string-to-${formatType}` as any;
+      encodeOutput = convert(encodeInput, type);
     } catch (error) {
       encodeErrorMsg = error instanceof Error ? error.message : 'Encoding failed';
       encodeOutput = '';
@@ -119,22 +72,25 @@
   $: {
     try {
       decodeErrorMsg = '';
-      decodeOutput = decodeFormat(decodeInput, formatType);
+      const type = `${formatType}-to-string` as any;
+      decodeOutput = convert(decodeInput, type);
     } catch (error) {
       decodeErrorMsg = error instanceof Error ? error.message : 'Decoding failed';
       decodeOutput = '';
     }
   }
+
+  const instanceId = Math.random().toString(36).substring(2, 9);
 </script>
 
-<div class="space-y-4">
+<div class="space-y-6 flex flex-col h-full min-h-0">
   <!-- Format Type Selector -->
-  <div>
-    <label for="format-type" class="block text-sm font-medium text-retro-text">Format Type</label>
+  <div class="shrink-0">
+    <label for="format-{instanceId}" class="block text-[10px] font-bold text-zinc-400 mb-2 uppercase tracking-widest opacity-70">Conversion Format</label>
     <select 
-      id="format-type"
+      id="format-{instanceId}"
       bind:value={formatType}
-      class="w-full border border-retro-border rounded-md bg-retro-input-bg text-retro-text p-2 text-sm"
+      class="w-full border border-zinc-700 rounded-sm bg-zinc-900 text-white text-sm px-3 py-1.5 outline-none focus:ring-1 focus:ring-blue-500"
     >
       {#each formats as fmt}
         <option value={fmt.value}>{fmt.label}</option>
@@ -142,82 +98,98 @@
     </select>
   </div>
 
-  <!-- ENCODE Section -->
-  <div>
-    <h3 class="text-xs font-semibold text-retro-text mb-2">Encode (Text → {formatType.toUpperCase()})</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-      <!-- Encode Input -->
-      <div class="flex flex-col">
-        <div class="flex items-center justify-between mb-1">
-          <label for="encode-input" class="text-xs font-semibold text-retro-text">Input</label>
-        </div>
-        <div class="border border-retro-border rounded-md overflow-hidden" style="height: 150px;">
-          <CodeEditor id="encode-input" bind:value={encodeInput} lang="text" />
-        </div>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-8 flex-1 min-h-0">
+    <!-- ENCODE Section -->
+    <div class="flex flex-col min-h-0 border-r border-zinc-800/30 pr-4 xl:pr-8 last:border-0 last:pr-0">
+      <div class="flex items-center justify-between border-b border-blue-900/50 pb-1 shrink-0 mb-4">
+        <h3 class="text-[10px] font-bold text-blue-500 uppercase tracking-widest">Encode</h3>
+        <span class="text-[9px] text-zinc-500 font-mono">TEXT → {formatType.toUpperCase()}</span>
       </div>
+      
+      <div class="flex-1 grid grid-rows-2 gap-6 min-h-0">
+        <!-- Input -->
+        <div class="flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-2 h-6 shrink-0">
+            <label for="encode-in-{instanceId}" class="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter opacity-60">Source Text</label>
+            <button on:click={() => clear('encode')} class="flex items-center space-x-1 px-2 py-1 bg-zinc-700 hover:bg-zinc-600 rounded transition-colors text-[9px] text-white uppercase font-bold tracking-tighter shadow-sm">
+              <span>Clear</span>
+            </button>
+          </div>
+          <div class="border border-zinc-800 rounded-sm overflow-hidden flex-1 min-h-0 bg-[#282c34]">
+            <CodeEditor bind:value={encodeInput} id="encode-in-{instanceId}" lang="text" />
+          </div>
+        </div>
 
-      <!-- Encode Output -->
-      <div class="flex flex-col">
-        <div class="flex items-center justify-between mb-1">
-          <label for="encode-output" class="text-xs font-semibold text-retro-text">Output</label>
-          <!-- <button 
-            on:click={copyEncode}
-            disabled={!encodeOutput}
-            class="px-2 py-1 text-xs rounded font-medium transition-all {encodeCopyFeedback 
-              ? 'bg-green-600 text-white' 
-              : encodeOutput
-              ? 'text-retro-text bg-retro-button-bg hover:bg-retro-button-hover' 
-              : 'text-retro-text opacity-50 cursor-not-allowed bg-retro-button-bg'}"
-          >
-            {encodeCopyFeedback ? '✓ Copied' : 'Copy'}
-          </button> -->
+        <!-- Output -->
+        <div class="flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-2 h-6 shrink-0">
+            <label for="encode-out-{instanceId}" class="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter opacity-60">Result</label>
+            <button 
+              on:click={() => copy(encodeOutput, 'encode')}
+              disabled={!encodeOutput}
+              class="flex items-center space-x-1 px-2 py-1 transition-all text-[9px] text-white uppercase font-bold tracking-tighter rounded shadow-sm {encodeCopyFeedback ? 'bg-emerald-600' : 'bg-blue-600 hover:bg-blue-500'}"
+            >
+              {#if encodeCopyFeedback}
+                <span>Copied</span>
+              {:else}
+                <span>Copy</span>
+              {/if}
+            </button>
+          </div>
+          <div class="border border-zinc-800 rounded-sm overflow-hidden bg-zinc-900 flex-1 min-h-0">
+            <CodeEditor value={encodeOutput} id="encode-out-{instanceId}" lang="text" readonly={true} />
+          </div>
+          {#if encodeErrorMsg}
+            <div class="mt-2 text-red-500 text-[9px] font-mono shrink-0">{encodeErrorMsg}</div>
+          {/if}
         </div>
-        <div class="border border-retro-border rounded-md overflow-hidden" style="height: 150px;">
-          <CodeEditor id="encode-output" value={encodeOutput} lang="text" readonly={true} />
-        </div>
-        {#if encodeErrorMsg}
-          <div class="mt-1 text-red-400 text-xs">{encodeErrorMsg}</div>
-        {/if}
       </div>
     </div>
-  </div>
 
-  <!-- DECODE Section -->
-  <div>
-    <h3 class="text-xs font-semibold text-retro-text mb-2">Decode ({formatType.toUpperCase()} → Text)</h3>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-      <!-- Decode Input -->
-      <div class="flex flex-col">
-        <div class="flex items-center justify-between mb-1">
-          <label for="decode-input" class="text-xs font-semibold text-retro-text">Input</label>
-        </div>
-        <div class="border border-retro-border rounded-md overflow-hidden" style="height: 150px;">
-          <CodeEditor id="decode-input" bind:value={decodeInput} lang="text" />
-        </div>
+    <!-- DECODE Section -->
+    <div class="flex flex-col min-h-0">
+      <div class="flex items-center justify-between border-b border-emerald-900/50 pb-1 shrink-0 mb-4">
+        <h3 class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest">Decode</h3>
+        <span class="text-[9px] text-zinc-500 font-mono">{formatType.toUpperCase()} → TEXT</span>
       </div>
+      
+      <div class="flex-1 grid grid-rows-2 gap-6 min-h-0">
+        <!-- Input -->
+        <div class="flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-2 h-6 shrink-0">
+            <label for="decode-in-{instanceId}" class="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter opacity-60">Encoded Content</label>
+            <button on:click={() => clear('decode')} class="flex items-center space-x-1 px-2 py-1 bg-zinc-700 hover:bg-zinc-600 rounded transition-colors text-[9px] text-white uppercase font-bold tracking-tighter shadow-sm">
+              <span>Clear</span>
+            </button>
+          </div>
+          <div class="border border-zinc-800 rounded-sm overflow-hidden flex-1 min-h-0 bg-[#282c34]">
+            <CodeEditor bind:value={decodeInput} id="decode-in-{instanceId}" lang="text" />
+          </div>
+        </div>
 
-      <!-- Decode Output -->
-      <div class="flex flex-col">
-        <div class="flex items-center justify-between mb-1">
-          <label for="decode-output" class="text-xs font-semibold text-retro-text">Output</label>
-          <!-- <button 
-            on:click={copyDecode}
-            disabled={!decodeOutput}
-            class="px-2 py-1 text-xs rounded font-medium transition-all {decodeCopyFeedback 
-              ? 'bg-green-600 text-white' 
-              : decodeOutput
-              ? 'text-retro-text bg-retro-button-bg hover:bg-retro-button-hover' 
-              : 'text-retro-text opacity-50 cursor-not-allowed bg-retro-button-bg'}"
-          >
-            {decodeCopyFeedback ? '✓ Copied' : 'Copy'}
-          </button> -->
+        <!-- Output -->
+        <div class="flex flex-col min-h-0">
+          <div class="flex items-center justify-between mb-2 h-6 shrink-0">
+            <label for="decode-out-{instanceId}" class="text-[9px] font-bold text-zinc-400 uppercase tracking-tighter opacity-60">Decoded Text</label>
+            <button 
+              on:click={() => copy(decodeOutput, 'decode')}
+              disabled={!decodeOutput}
+              class="flex items-center space-x-1 px-2 py-1 transition-all text-[9px] text-white uppercase font-bold tracking-tighter rounded shadow-sm {decodeCopyFeedback ? 'bg-emerald-600' : 'bg-emerald-600 hover:bg-emerald-500'}"
+            >
+              {#if decodeCopyFeedback}
+                <span>Copied</span>
+              {:else}
+                <span>Copy</span>
+              {/if}
+            </button>
+          </div>
+          <div class="border border-zinc-800 rounded-sm overflow-hidden bg-zinc-900 flex-1 min-h-0">
+            <CodeEditor value={decodeOutput} id="decode-out-{instanceId}" lang="text" readonly={true} />
+          </div>
+          {#if decodeErrorMsg}
+            <div class="mt-2 text-red-500 text-[9px] font-mono shrink-0">{decodeErrorMsg}</div>
+          {/if}
         </div>
-        <div class="border border-retro-border rounded-md overflow-hidden" style="height: 150px;">
-          <CodeEditor id="decode-output" value={decodeOutput} lang="text" readonly={true} />
-        </div>
-        {#if decodeErrorMsg}
-          <div class="mt-1 text-red-400 text-xs">{decodeErrorMsg}</div>
-        {/if}
       </div>
     </div>
   </div>

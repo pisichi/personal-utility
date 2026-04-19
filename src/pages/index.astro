@@ -1,10 +1,25 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro';
-import Converter from '../features/converter/Converter.svelte';
+import Workspace from '../components/workspace/Workspace.svelte';
 ---
 
-<MainLayout title="Text Converter">
-  <div>
-    <Converter client:load />
+<MainLayout title="Multi-Tool Workspace">
+  <div class="w-full h-full">
+    <Workspace client:load />
   </div>
 </MainLayout>
+
+<style>
+  /* Ensure the workspace container takes full available space */
+  :global(main) {
+    height: 100%;
+  }
+  :global(.mx-auto.max-w-7xl) {
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    height: 100%;
+  }
+</style>

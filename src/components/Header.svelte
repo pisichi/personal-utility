@@ -7,49 +7,49 @@
     isMenuOpen = !isMenuOpen;
   }
 
-  onMount(() => {
-    // Optional: Add event listeners or other logic on mount
-  });
+  function resetWorkspace() {
+    if (confirm("Reset layout to default?")) {
+      localStorage.removeItem('personal-utility-workspace');
+      window.location.reload();
+    }
+  }
 </script>
 
-<nav class="bg-retro-bg border-b border-retro-border">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="flex h-16 items-center justify-between">
-      <div class="flex items-center">
-        <div class="flex-shrink-0">
-          
-        </div>
-        <div class="hidden md:block">
-          <div class="ml-10 flex items-baseline space-x-4">
-            <a href="/personal-utility/" class="text-retro-text hover:text-retro-primary px-3 py-2 rounded-md text-sm font-medium">Converter</a>
-            <a href="/personal-utility/formatter" class="text-retro-text hover:text-retro-primary px-3 py-2 rounded-md text-sm font-medium">Formatter</a>
-            <a href="/personal-utility/comparator" class="text-retro-text hover:text-retro-primary px-3 py-2 rounded-md text-sm font-medium">Comparator</a>
-          </div>
-        </div>
+<nav class="bg-[#09090b] border-b border-zinc-800 shrink-0">
+  <div class="mx-auto px-4">
+    <div class="flex h-10 items-center justify-between">
+      <div class="flex items-center space-x-4">
+        <span class="text-[10px] font-bold text-zinc-100 tracking-[0.2em] uppercase">Utility::Toolkit</span>
+        
+        <div class="hidden md:flex h-3 w-[1px] bg-zinc-800"></div>
+        
+        <button 
+          on:click={resetWorkspace}
+          class="text-[9px] font-bold text-zinc-500 hover:text-red-400 uppercase tracking-widest transition-colors"
+        >
+          Reset Workspace
+        </button>
       </div>
+
       <div class="-mr-2 flex md:hidden">
-        <button on:click={toggleMenu} type="button" class="inline-flex items-center justify-center p-2 rounded-md text-retro-text hover:bg-retro-button-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-retro-primary" aria-controls="mobile-menu" aria-expanded="false">
-          <span class="sr-only">Open main menu</span>
-          {#if !isMenuOpen}
-            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          {:else}
-            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          {/if}
+        <button on:click={toggleMenu} type="button" class="inline-flex items-center justify-center p-2 text-zinc-400 hover:text-white transition-colors">
+          <svg class="block h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
       </div>
     </div>
   </div>
 
   {#if isMenuOpen}
-    <div class="md:hidden bg-retro-bg p-4 border-t border-retro-border" id="mobile-menu">
-      <div class="space-y-1">
-        <a href="/personal-utility/" class="text-retro-text hover:text-retro-primary block px-3 py-2 rounded-md text-base font-medium">Converter</a>
-        <a href="/personal-utility/formatter" class="text-retro-text hover:text-retro-primary block px-3 py-2 rounded-md text-base font-medium">Formatter</a>
-        <a href="/personal-utility/comparator" class="text-retro-text hover:text-retro-primary block px-3 py-2 rounded-md text-base font-medium">Comparator</a>
+    <div class="md:hidden bg-zinc-900 border-t border-zinc-800 px-6 py-4 shadow-2xl" id="mobile-menu">
+      <div class="flex flex-col space-y-4">
+        <button 
+          on:click={resetWorkspace}
+          class="text-left text-zinc-400 hover:text-white text-[10px] font-medium uppercase tracking-widest"
+        >
+          Reset Workspace
+        </button>
       </div>
     </div>
   {/if}

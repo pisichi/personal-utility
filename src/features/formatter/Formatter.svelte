@@ -1,66 +1,61 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { createEventDispatcher } from 'svelte';
   import CodeEditor from '../../editors/CodeEditor.svelte';
   import xmlFormatter from 'xml-formatter';
-  import { base64ToUtf8 } from '../../utils/decode';
+  import { detectFormatType } from '../../utils/formatDetector';
+  import { validateXml, formatXmlWithOrgMsg } from '../../utils/xmlUtils';
 
-  let input: string = typeof window !== 'undefined' ? localStorage.getItem('formatterInput') || '' : '';
+  const dispatch = createEventDispatcher();
+
+  export let initialData: any = {};
+
+  let input: string = initialData.input || '';
+  let formatType: 'json' | 'xml' | 'auto' = initialData.formatType || 'auto';
+  let decodeOrgMsg: boolean = initialData.decodeOrgMsg || false;
+
   let output: string = '';
   let errorMessage: string = '';
-  let formatType: 'json' | 'xml' = typeof window !== 'undefined' && localStorage.getItem('formatterFormatType') ? (localStorage.getItem('formatterFormatType') as 'json' | 'xml') : 'json';
-  let decodeOrgMsg: boolean = false;
-  let effectiveFormat: 'json' | 'xml' = formatType;
+  let syntaxError: string = '';
+  let copyFeedback = false;
 
-  onMount(() => {
-    effectiveFormat = formatType;
-  });
+  $: effectiveFormat = formatType === 'auto' ? (detectFormatType(input) === 'xml' ? 'xml' : 'json') : formatType;
 
+  // Real-time syntax check
   $: {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('formatterInput', input);
-      localStorage.setItem('formatterFormatType', formatType);
-      effectiveFormat = formatType;
+    if (input.trim()) {
+      if (effectiveFormat === 'json') {
+        try {
+          JSON.parse(input);
+          syntaxError = '';
+        } catch (e: any) {
+          syntaxError = 'Invalid JSON: ' + e.message;
+        }
+      } else if (effectiveFormat === 'xml') {
+        const error = validateXml(input);
+        syntaxError = error ? 'Invalid XML: ' + error : '';
+      }
+    } else {
+      syntaxError = '';
     }
   }
 
-  // Reactive statement to clear output/error when input is empty
+  // Notify parent of state changes
+  $: {
+    dispatch('update', {
+      input,
+      formatType,
+      decodeOrgMsg
+    });
+  }
+
   $: if (!input) {
     output = '';
     errorMessage = '';
   }
-  
-  function validateXml(xmlStr: string): string {
-    if (typeof DOMParser === 'undefined') return '';
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(xmlStr, 'application/xml');
-    const errs = doc.getElementsByTagName('parsererror');
-    if (errs.length > 0) {
-      return errs[0].textContent || 'XML parsing error';
-    }
-    return '';
-  }
-
-  function formatXmlWithOrgMsg(xmlString: string): string {
-    const processedXml = xmlString.replace(/<([^>]*OrgMsg[^>]*)>([^<]+)<\/\1>/g, (match, tagName, base64Content) => {
-        try {
-            const decoded = base64ToUtf8(base64Content);
-            const formattedDecoded = formatXmlWithOrgMsg(decoded); // Recursive call
-            return `<${tagName}>\n${formattedDecoded}\n</${tagName}>`;
-        } catch (e) {
-            console.warn("Failed to decode or format base64 content:", e);
-            return match;
-        }
-    });
-
-    return xmlFormatter(processedXml, {
-        indentation: '  ',
-        collapseContent: true, // Collapse content for tighter formatting
-        lineSeparator: '\n'
-    });
-  }
 
   function format() {
     try {
+      if (!input) return;
       if (effectiveFormat === 'json') {
         output = JSON.stringify(JSON.parse(input), null, 2);
       } else if (effectiveFormat === 'xml') {
@@ -73,7 +68,7 @@
         } else {
             output = xmlFormatter(input, {
               indentation: '  ',
-              collapseContent: true, // Collapse whitespace in text content
+              collapseContent: true,
               lineSeparator: '\n'
             });
         }
@@ -87,6 +82,7 @@
 
   function minify() {
     try {
+      if (!input) return;
       if (effectiveFormat === 'json') {
         output = JSON.stringify(JSON.parse(input));
       } else if (effectiveFormat === 'xml') {
@@ -94,11 +90,10 @@
         if (validationError) {
           throw new Error(validationError);
         }
-        // Note: minify doesn't use the decode logic. This could be a future improvement.
         output = xmlFormatter(input, {
-          indentation: '', // No indentation for minifying
-          collapseContent: true, // Collapse content for minifying
-          lineSeparator: '' // No line breaks for minifying
+          indentation: '',
+          collapseContent: true,
+          lineSeparator: ''
         });
       }
       errorMessage = '';
@@ -107,55 +102,96 @@
       output = '';
     }
   }
+
+  function copyOutput() {
+    if (output) {
+      navigator.clipboard.writeText(output).then(() => {
+        copyFeedback = true;
+        setTimeout(() => (copyFeedback = false), 2000);
+      });
+    }
+  }
+
+  function clearAll() {
+    input = '';
+    output = '';
+    errorMessage = '';
+    syntaxError = '';
+  }
+
+  const instanceId = Math.random().toString(36).substring(2, 9);
 </script>
 
-<div class="space-y-3">
-  <div>
-    <label for="format-type" class="block text-sm font-medium text-retro-text">Format Type</label>
-    <select id="format-type" bind:value={formatType} class="block w-full mt-1 border-retro-border rounded-md bg-retro-input-bg text-retro-text focus:ring-retro-primary focus:border-retro-primary sm:text-sm p-2">
-      <option value="json">JSON</option>
-      <option value="xml">XML</option>
-    </select>
+<div class="space-y-6 flex flex-col h-full min-h-0 pr-1">
+  <div class="flex flex-wrap items-end gap-4 shrink-0">
+    <div class="flex-1 min-w-[140px]">
+      <label for="format-type-{instanceId}" class="block text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-2 opacity-70">Format Type</label>
+      <select id="format-type-{instanceId}" bind:value={formatType} class="block w-full border border-zinc-700 rounded-sm bg-zinc-900 text-white text-sm px-2 py-1.5 outline-none focus:ring-1 focus:ring-blue-500">
+        <option value="auto">Auto ({effectiveFormat.toUpperCase()})</option>
+        <option value="json">JSON</option>
+        <option value="xml">XML</option>
+      </select>
+    </div>
+
+    {#if effectiveFormat === 'xml'}
+    <div class="flex items-center mb-2.5">
+      <input id="decode-org-msg-{instanceId}" type="checkbox" bind:checked={decodeOrgMsg} class="h-4 w-4 text-blue-500 border-zinc-700 rounded focus:ring-blue-500 bg-zinc-900">
+      <label for="decode-org-msg-{instanceId}" class="ml-2 block text-[9px] font-bold text-zinc-400 uppercase tracking-tighter opacity-80 cursor-pointer">Decode OrgMsg</label>
+    </div>
+    {/if}
+
+    <div class="flex space-x-2 mb-1">
+      <button on:click={format} class="flex items-center space-x-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 transition-colors rounded-sm shadow-sm disabled:opacity-30 disabled:cursor-not-allowed" disabled={!!syntaxError && !!input}>
+        <span>Format</span>
+      </button>
+      <button on:click={minify} class="flex items-center space-x-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-white bg-amber-600 hover:bg-amber-500 transition-colors rounded-sm border border-amber-700 shadow-sm disabled:opacity-30 disabled:cursor-not-allowed" disabled={!!syntaxError && !!input}>
+        <span>Minify</span>
+      </button>
+      <button on:click={clearAll} class="flex items-center space-x-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-zinc-300 bg-zinc-700 hover:bg-zinc-600 transition-colors rounded-sm">
+        <span>Clear</span>
+      </button>
+    </div>
   </div>
 
-  {#if effectiveFormat === 'xml'}
-  <div class="flex items-center">
-    <input id="decode-org-msg" type="checkbox" bind:checked={decodeOrgMsg} class="h-4 w-4 text-retro-primary border-retro-border rounded focus:ring-retro-primary">
-    <label for="decode-org-msg" class="ml-2 block text-sm text-retro-text">Decode OrgMsg</label>
+  {#if syntaxError && input}
+  <div class="p-3 border border-yellow-900/50 bg-yellow-900/10 text-yellow-500 text-[10px] font-mono rounded-sm shrink-0">
+    {syntaxError}
   </div>
   {/if}
-
-  <div class="flex space-x-2 mt-4">
-    <button on:click={format} class="px-4 py-2 rounded-md font-medium text-retro-text bg-retro-button-bg hover:bg-retro-button-hover">
-      Format
-    </button>
-    <button on:click={minify} class="px-4 py-2 rounded-md font-medium text-retro-text bg-retro-button-bg hover:bg-retro-button-hover">
-      Minify
-    </button>
-  </div>
 
   {#if errorMessage}
-  <div class="mt-2 text-red-400 text-sm">
-    Error: {errorMessage}
+  <div class="p-3 border border-red-900/50 bg-red-900/10 text-red-400 text-[10px] font-mono rounded-sm shrink-0">
+    Execution Error: {errorMessage}
   </div>
   {/if}
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center mt-4">
-    <div>
-      <h2 class="text-retro-text">Input</h2>
-      <div class="w-full h-full">
-        <CodeEditor bind:value={input} lang={effectiveFormat} />
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 flex-1 min-h-0">
+    <div class="flex flex-col h-full min-h-0">
+      <div class="flex items-center justify-between mb-3 shrink-0 h-6 border-b border-emerald-900/30">
+        <h2 class="text-[10px] font-bold text-emerald-500 uppercase tracking-widest opacity-80">Source Input</h2>
+      </div>
+      <div class="border border-zinc-800 rounded-sm overflow-hidden flex-1 min-h-0 bg-[#282c34]">
+        <CodeEditor bind:value={input} id="format-in-{instanceId}" lang={effectiveFormat === 'xml' ? 'xml' : 'json'} />
       </div>
     </div>
-    <div>
-      <h2 class="text-retro-text">Output</h2>
-      <div class="w-full h-full">
-        <CodeEditor value={output} lang={effectiveFormat} readonly={true} />
+    <div class="flex flex-col h-full min-h-0">
+      <div class="flex items-center justify-between mb-3 shrink-0 h-6 border-b border-amber-900/30">
+        <h2 class="text-[10px] font-bold text-amber-500 uppercase tracking-widest opacity-80">Formatted Result</h2>
+        <button 
+          on:click={copyOutput} 
+          disabled={!output}
+          class="flex items-center space-x-1 px-2 py-0.5 transition-all text-[9px] text-white uppercase font-bold tracking-tighter rounded shadow-sm {copyFeedback ? 'bg-emerald-600' : 'bg-amber-600 hover:bg-amber-500'}"
+        >
+          {#if copyFeedback}
+            <span>Copied</span>
+          {:else}
+            <span>Copy</span>
+          {/if}
+        </button>
+      </div>
+      <div class="border border-zinc-800 rounded-sm overflow-hidden bg-zinc-900 flex-1 min-h-0">
+        <CodeEditor value={output} id="format-out-{instanceId}" lang={effectiveFormat === 'xml' ? 'xml' : 'json'} readonly={true} />
       </div>
     </div>
   </div>
 </div>
-
-<style>
-  /* Removed hard-coded height, now using standard --editor-height from global.css */
-</style>

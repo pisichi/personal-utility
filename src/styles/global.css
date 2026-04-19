@@ -2,99 +2,90 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
-/* Generic Retro Theme - Not Win95 */
+/* Sleek Industrial Grey Theme - LIGHTER & HIGH CONTRAST */
 
 :root {
-  --color-retro-bg: #282c34; /* Dark charcoal */
-  --color-retro-text: #abb2bf; /* Light gray */
-  --color-retro-primary: #61afef; /* Muted blue */
-  --color-retro-secondary: #c678dd; /* Muted purple */
-  --color-retro-border: #3e4451; /* Darker gray */
-  --color-retro-input-bg: #1e2127; /* Very dark gray */
-  --color-retro-button-bg: #3e4451; /* Darker gray */
-  --color-retro-button-hover: #4b5263; /* Slightly lighter gray */
+  --color-retro-bg: #27272a; /* Zinc 800 */
+  --color-retro-text: #ffffff;
+  --color-retro-primary: #60a5fa;
+  --color-retro-border: #3f3f46;
+  --color-retro-input-bg: #18181b;
+  --color-retro-button-bg: #52525b;
+  --color-retro-button-hover: #71717a;
 
   /* Standard UI sizes */
-  --editor-height: 500px;
-  --input-height: 2.5rem;
-  --button-padding: 0.5rem 1rem;
-  --margin-standard: 0.75rem;
-  --gap-standard: 1rem;
+  --editor-height: 100%;
+  --hypr-curve: cubic-bezier(0.05, 0.9, 0.1, 1);
 }
 
 body {
-  font-family: "Roboto Mono", monospace; /* A common retro/dev font */
+  font-family: 'Inter', system-ui, sans-serif;
   background-color: var(--color-retro-bg);
   color: var(--color-retro-text);
   margin: 0;
   padding: 0;
 }
 
-/* Basic overrides for common elements */
-button,
+code, pre, .font-mono {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85rem;
+}
+
+/* Base Inputs - No global padding on buttons to avoid breaking icon buttons */
 select,
 input,
 textarea {
   background-color: var(--color-retro-input-bg);
-  color: var(--color-retro-text);
+  color: #ffffff;
   border: 1px solid var(--color-retro-border);
-  padding: var(--button-padding);
-  border-radius: 3px;
-  font-size: 1rem;
-  transition: background-color 0.2s;
+  padding: 0.35rem 0.75rem;
+  border-radius: 2px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  outline: none;
 }
 
 button {
   background-color: var(--color-retro-button-bg);
+  color: #ffffff;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.1s ease;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-button:hover {
+/* Standard button class for tools */
+.btn-std {
+  padding: 0.35rem 0.75rem;
+  border-radius: 2px;
+  border-color: var(--color-retro-border);
+}
+
+button:hover:not(:disabled) {
   background-color: var(--color-retro-button-hover);
+  border-color: var(--color-retro-primary);
 }
 
 input:focus,
 select:focus,
-textarea:focus,
-button:focus {
-  outline: none;
+textarea:focus {
   border-color: var(--color-retro-primary);
-  box-shadow: 0 0 0 2px rgba(97, 175, 239, 0.3); /* Focus ring */
 }
 
-/* Editor container defaults */
-.editor-wrapper {
-  width: 100%;
-  height: var(--editor-height);
-  overflow: auto;
+/* Labels */
+label, .label-text {
+  color: #a1a1aa;
+  font-weight: 600;
 }
 
-/* Global Scrollbar Styles */
-/* For WebKit browsers (Chrome, Safari, Edge) */
-::-webkit-scrollbar {
-  width: 8px; /* width of the entire scrollbar */
-  height: 8px; /* height of the entire scrollbar (for horizontal) */
-}
-
-::-webkit-scrollbar-track {
-  background: var(--color-retro-input-bg); /* color of the tracking area */
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: var(--color-retro-button-bg); /* color of the scroll thumb */
-  border-radius: 10px; /* roundness of the scroll thumb */
-  border: 2px solid var(--color-retro-input-bg); /* creates padding around scroll thumb */
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: var(--color-retro-button-hover); /* color of the scroll thumb on hover */
-}
-
-/* For Firefox */
-/* Using `html` and `body` to target global scrollbars */
-html,
-body {
-  scrollbar-width: thin; /* "auto" or "thin" */
-  scrollbar-color: var(--color-retro-button-bg) var(--color-retro-input-bg); /* thumb and track color */
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #18181b; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #60a5fa; }

@@ -1,27 +1,20 @@
 import { expect, test } from "vitest";
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { fileURLToPath } from 'url';
 
-// Ensure formatter component uses shared constants and not hard-coded heights
-// and that detection logic has been removed in favor of a persisted dropdown.
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = resolve(__filename, '..');
 
-test("Formatter component relies on shared size constants", () => {
+// Ensure formatter component uses modern classes and supports the new features.
+
+test("Formatter component includes correct logic and structure", () => {
   const file = readFileSync(resolve(__dirname, "../features/formatter/Formatter.svelte"), "utf-8");
-  expect(file).not.toMatch(/600px/);
-  expect(file).toMatch(/--editor-height/);
-  // detection code should be gone
-  expect(file).not.toMatch(/detectFormatType/);
-  // sanitizeXml helper should exist
+  expect(file).toMatch(/flex-1/);
+  expect(file).toMatch(/detectFormatType/);
   expect(file).toMatch(/function validateXml/);
-  // sanitizer removed
-  expect(file).not.toMatch(/sanitizeXml/);
-  // dropdown only has json/xml, no "auto"
-  expect(file).not.toMatch(/option value="auto"/);
-  expect(file).toMatch(/option value="json"/);
-  expect(file).toMatch(/option value="xml"/);
-  // verify we save formatType to localStorage on change
-  expect(file).toMatch(/localStorage.setItem\('formatterFormatType'/);
-  // error message area present
+  expect(file).toMatch(/option value="auto"/);
+  expect(file).toMatch(/dispatch\('update'/);
   expect(file).toMatch(/errorMessage/);
-  expect(file).toMatch(/text-red-400/);
+  expect(file).toMatch(/syntaxError/);
 });
