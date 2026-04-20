@@ -1,4 +1,4 @@
-export type PanelType = 'converter' | 'formatter' | 'comparator' | 'empty';
+export type PanelType = 'converter' | 'formatter' | 'comparator' | 'base64-image' | 'minifier' | 'ascii-detector' | 'empty';
 
 export interface PanelState {
   id: string;

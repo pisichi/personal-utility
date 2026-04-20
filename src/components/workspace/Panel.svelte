@@ -7,6 +7,9 @@
   import Formatter from '../../features/formatter/Formatter.svelte';
   import Comparator from '../../features/diff/Comparator.svelte';
   import { ChevronDown, Minus, Plus, CopyPlus, Columns, Rows, X } from 'lucide-svelte';
+  import Base64Image from '../../features/base64-image/Base64Image.svelte';
+  import Minifier from '../../features/minifier/Minifier.svelte';
+  import AsciiDetector from '../../features/ascii-detector/AsciiDetector.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -17,6 +20,9 @@
     { value: 'converter', label: 'Converter' },
     { value: 'formatter', label: 'Formatter' },
     { value: 'comparator', label: 'Comparator' },
+    { value: 'base64-image', label: 'Base64 Image' },
+    { value: 'minifier', label: 'Minifier' },
+    { value: 'ascii-detector', label: 'Ascii Detector' },
     { value: 'empty', label: 'Empty' },
   ];
 
@@ -64,9 +70,9 @@
   }
 </script>
 
-<div class="flex flex-col h-full w-full bg-[#121214] rounded-sm border border-zinc-700 shadow-sm overflow-hidden group/panel min-h-0 min-w-0">
+<div class="flex flex-col h-full w-full bg-[#121214] rounded-sm border border-zinc-700 shadow-sm group/panel min-h-0 min-w-0">
   <!-- Sharp Header -->
-  <div class="flex items-center justify-between h-9 px-3 bg-zinc-900 border-b border-zinc-700 shrink-0 select-none relative z-50">
+  <div class="flex items-center justify-between h-9 px-3 bg-zinc-900 border-b border-zinc-700 shrink-0 select-none relative z-50 rounded-t-[1px]">
     <div class="flex items-center h-full space-x-4 min-w-0 flex-1">
       
       <!-- Custom Animated Dropdown -->
@@ -160,13 +166,19 @@
       style="transform: scale({zoom}); transform-origin: top left; width: {100/zoom}%; height: {100/zoom}%; min-height: 100%;" 
       class="flex flex-col p-4 min-h-full"
     >
-      <div class="flex-1 flex flex-col min-h-[400px]">
+      <div class="flex-1 flex flex-col min-h-[100px]">
         {#if panel.type === 'converter'}
           <Converter initialData={panel.data} on:update={handleUpdate} />
         {:else if panel.type === 'formatter'}
           <Formatter initialData={panel.data} on:update={handleUpdate} />
         {:else if panel.type === 'comparator'}
           <Comparator initialData={panel.data} on:update={handleUpdate} />
+        {:else if panel.type === 'base64-image'}
+          <Base64Image initialData={panel.data} on:update={handleUpdate} />
+        {:else if panel.type === 'minifier'}
+          <Minifier initialData={panel.data} on:update={handleUpdate} />
+        {:else if panel.type === 'ascii-detector'}
+          <AsciiDetector initialData={panel.data} on:update={handleUpdate} />
         {:else}
           <div class="h-full flex-1 flex flex-col items-center justify-center opacity-30">
             <span class="text-sm font-bold uppercase tracking-[0.4em] text-zinc-300">Select Tool Above</span>

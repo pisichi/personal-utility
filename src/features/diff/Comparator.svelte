@@ -130,17 +130,22 @@
     height: 100%;
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
   :global(.cm-mergeViewEditors) {
-    height: 100% !important;
+    flex: 1;
+    min-height: 0;
     overflow: hidden !important;
     display: flex !important;
   }
   :global(.cm-editor) {
+    flex: 1;
+    min-width: 0;
     height: 100% !important;
     background-color: transparent !important;
   }
   :global(.cm-scroller) {
     overflow: auto !important;
+    height: 100%;
   }
 </style>

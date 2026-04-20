@@ -104,7 +104,7 @@
 <div 
   bind:this={editorEl} 
   {id} 
-  class="w-full h-full min-h-[300px] bg-[#282c34] flex flex-col overflow-hidden"
+  class="w-full h-full min-h-0 bg-[#282c34] flex flex-col overflow-hidden"
 ></div>
 
 <style>
