@@ -1,10 +1,9 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte';
-  import { slide } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
+  import { createEventDispatcher } from 'svelte';
   import CodeEditor from '../../editors/CodeEditor.svelte';
   import { convert } from './converter';
-  import { ChevronDown } from 'lucide-svelte';
+  import Select from '../../components/ui/Select.svelte';
+  import Button from '../../components/ui/Button.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -30,31 +29,6 @@
     { value: 'url', label: 'URL Encode' },
   ];
 
-  $: currentFormatLabel = formats.find(f => f.value === formatType)?.label || 'Base64';
-
-  let isFormatDropdownOpen = false;
-  let formatDropdownRef: HTMLDivElement;
-
-  function toggleFormatDropdown() {
-    isFormatDropdownOpen = !isFormatDropdownOpen;
-  }
-
-  function handleFormatChange(newFormat: FormatType) {
-    isFormatDropdownOpen = false;
-    formatType = newFormat;
-  }
-
-  function handleClickOutside(event: MouseEvent) {
-    if (formatDropdownRef && !formatDropdownRef.contains(event.target as Node)) {
-      isFormatDropdownOpen = false;
-    }
-  }
-
-  onMount(() => {
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  });
-
   function copy(text: string, side: 'encode' | 'decode') {
     if (text) {
       navigator.clipboard.writeText(text).then(() => {
@@ -77,7 +51,6 @@
     }
   }
 
-  // Notify parent of state changes
   $: {
     dispatch('update', {
       formatType,
@@ -116,41 +89,11 @@
   <div class="shrink-0 flex items-center space-x-4">
     <div class="flex-1 max-w-sm relative z-40">
       <label for="format-{instanceId}" class="block text-xs font-bold text-zinc-400 mb-2 uppercase tracking-widest opacity-80">Conversion Format</label>
-      
-      <!-- Custom Animated Dropdown -->
-      <div class="relative w-full" bind:this={formatDropdownRef}>
-        <button 
-          id="format-{instanceId}"
-          on:click|stopPropagation={toggleFormatDropdown}
-          class="flex items-center justify-between w-full border border-zinc-700 rounded-sm bg-zinc-900 hover:bg-zinc-800 text-zinc-100 text-sm px-3 py-2 transition-colors outline-none focus:border-zinc-500 cursor-pointer"
-        >
-          <span>{currentFormatLabel}</span>
-          <ChevronDown 
-            size={14} 
-            strokeWidth={3} 
-            class="text-zinc-500 transition-transform duration-200 {isFormatDropdownOpen ? 'rotate-180 text-zinc-300' : ''}" 
-          />
-        </button>
-
-        {#if isFormatDropdownOpen}
-          <div 
-            transition:slide={{ duration: 200, easing: cubicOut }}
-            class="absolute top-full left-0 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-sm shadow-lg overflow-hidden z-50"
-          >
-            <div class="flex flex-col py-1">
-              {#each formats as fmt}
-                <button 
-                  on:click|stopPropagation={() => handleFormatChange(fmt.value as FormatType)}
-                  class="flex items-center px-3 py-2 text-sm font-medium cursor-pointer border-none text-left transition-colors w-full
-                         {formatType === fmt.value ? 'bg-zinc-700 text-zinc-100' : 'bg-transparent text-zinc-300 hover:bg-zinc-700/50 hover:text-zinc-100'}"
-                >
-                  {fmt.label}
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
-      </div>
+      <Select 
+        options={formats} 
+        bind:value={formatType} 
+        id="format-{instanceId}"
+      />
     </div>
   </div>
 
@@ -167,30 +110,30 @@
         <div class="flex flex-col min-h-0">
           <div class="flex items-center justify-between mb-2 h-8 shrink-0">
             <label for="encode-in-{instanceId}" class="text-xs font-bold text-zinc-400 uppercase tracking-tighter opacity-80">Source Text</label>
-            <button on:click={() => clear('encode')} class="flex items-center space-x-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-sm transition-colors text-xs text-zinc-300 uppercase font-bold tracking-tighter shadow-sm cursor-pointer">
+            <Button variant="secondary" on:click={() => clear('encode')}>
               <span>Clear</span>
-            </button>
+            </Button>
           </div>
           <div class="border border-zinc-700 rounded-sm overflow-hidden flex-1 min-h-0 bg-[#282c34] shadow-inner">
             <CodeEditor bind:value={encodeInput} id="encode-in-{instanceId}" lang="text" />
           </div>
         </div>
 
-
         <div class="flex flex-col min-h-0">
           <div class="flex items-center justify-between mb-2 h-8 shrink-0">
             <label for="encode-out-{instanceId}" class="text-xs font-bold text-zinc-400 uppercase tracking-tighter opacity-80">Result</label>
-            <button 
+            <Button 
+              variant="secondary"
               on:click={() => copy(encodeOutput, 'encode')}
               disabled={!encodeOutput}
-              class="flex items-center space-x-2 px-3 py-1.5 transition-all text-xs text-zinc-300 uppercase font-bold tracking-tighter rounded-sm shadow-sm border cursor-pointer {encodeCopyFeedback ? 'bg-zinc-700 border-zinc-500 text-white' : 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed'}"
+              class={encodeCopyFeedback ? '!bg-zinc-700 !border-zinc-500 !text-white' : ''}
             >
               {#if encodeCopyFeedback}
                 <span>Copied</span>
               {:else}
                 <span>Copy</span>
               {/if}
-            </button>
+            </Button>
           </div>
           <div class="border border-zinc-700 rounded-sm overflow-hidden bg-[#282c34] flex-1 min-h-0 shadow-inner">
             <CodeEditor value={encodeOutput} id="encode-out-{instanceId}" lang="text" readonly={true} />
@@ -202,6 +145,7 @@
       </div>
     </div>
 
+    <!-- DECODE Section -->
     <div class="flex flex-col min-h-0">
       <div class="flex items-center justify-between border-b border-zinc-800 pb-2 shrink-0 mb-4">
         <h3 class="text-sm font-bold text-zinc-300 uppercase tracking-widest">Decode</h3>
@@ -213,30 +157,30 @@
         <div class="flex flex-col min-h-0">
           <div class="flex items-center justify-between mb-2 h-8 shrink-0">
             <label for="decode-in-{instanceId}" class="text-xs font-bold text-zinc-400 uppercase tracking-tighter opacity-80">Encoded Content</label>
-            <button on:click={() => clear('decode')} class="flex items-center space-x-2 px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 rounded-sm transition-colors text-xs text-zinc-300 uppercase font-bold tracking-tighter shadow-sm cursor-pointer">
+            <Button variant="secondary" on:click={() => clear('decode')}>
               <span>Clear</span>
-            </button>
+            </Button>
           </div>
           <div class="border border-zinc-700 rounded-sm overflow-hidden flex-1 min-h-0 bg-[#282c34] shadow-inner">
             <CodeEditor bind:value={decodeInput} id="decode-in-{instanceId}" lang="text" />
           </div>
         </div>
 
-
         <div class="flex flex-col min-h-0">
           <div class="flex items-center justify-between mb-2 h-8 shrink-0">
             <label for="decode-out-{instanceId}" class="text-xs font-bold text-zinc-400 uppercase tracking-tighter opacity-80">Decoded Text</label>
-            <button 
+            <Button 
+              variant="secondary"
               on:click={() => copy(decodeOutput, 'decode')}
               disabled={!decodeOutput}
-              class="flex items-center space-x-2 px-3 py-1.5 transition-all text-xs text-zinc-300 uppercase font-bold tracking-tighter rounded-sm shadow-sm border cursor-pointer {decodeCopyFeedback ? 'bg-zinc-700 border-zinc-500 text-white' : 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed'}"
+              class={decodeCopyFeedback ? '!bg-zinc-700 !border-zinc-500 !text-white' : ''}
             >
               {#if decodeCopyFeedback}
                 <span>Copied</span>
               {:else}
                 <span>Copy</span>
               {/if}
-            </button>
+            </Button>
           </div>
           <div class="border border-zinc-700 rounded-sm overflow-hidden bg-[#282c34] flex-1 min-h-0 shadow-inner">
             <CodeEditor value={decodeOutput} id="decode-out-{instanceId}" lang="text" readonly={true} />

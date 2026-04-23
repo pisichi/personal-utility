@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from 'svelte';
+  import Button from '../../components/ui/Button.svelte';
   const dispatch = createEventDispatcher();
   
   export let initialData: any = {};
@@ -17,7 +18,6 @@
     if (base64String.startsWith('data:image')) {
       imageSrc = base64String;
     } else if (base64String.length > 0) {
-      // Try to guess image type or default to png
       imageSrc = `data:image/png;base64,${base64String}`;
     } else {
       imageSrc = '';
@@ -73,9 +73,9 @@
       Base64 Image Encoder/Decoder
     </div>
     <div class="flex space-x-3">
-      <button on:click={clearAll} title="Clear All" aria-label="Clear all content" class="flex items-center space-x-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-zinc-300 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-sm shadow-sm border border-zinc-700 cursor-pointer">
+      <Button variant="secondary" on:click={clearAll} title="Clear All">
         <span>Clear</span>
-      </button>
+      </Button>
     </div>
   </div>
 

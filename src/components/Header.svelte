@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Menu } from 'lucide-svelte';
+  import Button from './ui/Button.svelte';
 
   let isMenuOpen = false;
 
@@ -10,7 +11,7 @@
 
   function resetWorkspace() {
     if (confirm("Reset layout to default?")) {
-      localStorage.removeItem('personal-utility-workspace');
+      localStorage.removeItem('personal-utility-v3');
       window.location.reload();
     }
   }
@@ -24,18 +25,18 @@
         
         <div class="hidden md:flex h-3 w-[1px] bg-zinc-800"></div>
         
-        <button 
+        <Button variant="ghost"
           on:click={resetWorkspace}
-          class="text-[9px] font-bold text-zinc-500 hover:text-red-400 uppercase tracking-widest transition-colors"
+          class="!text-[9px] !font-bold !text-zinc-500 hover:!text-red-400 !uppercase tracking-widest transition-colors"
         >
           Reset Workspace
-        </button>
+        </Button>
       </div>
 
       <div class="-mr-2 flex md:hidden">
-        <button on:click={toggleMenu} type="button" class="inline-flex items-center justify-center p-2 text-zinc-400 hover:text-white transition-colors" aria-label="Open menu">
+        <Button variant="ghost" on:click={toggleMenu} ariaLabel="Open menu" class="!inline-flex !items-center !justify-center !p-2 !text-zinc-400 hover:!text-white transition-colors">
           <Menu size={16} strokeWidth={1.5} />
-        </button>
+        </Button>
       </div>
     </div>
   </div>
@@ -43,12 +44,12 @@
   {#if isMenuOpen}
     <div class="md:hidden bg-zinc-900 border-t border-zinc-800 px-6 py-4 shadow-2xl" id="mobile-menu">
       <div class="flex flex-col space-y-4">
-        <button 
+        <Button variant="ghost"
           on:click={resetWorkspace}
-          class="text-left text-zinc-400 hover:text-white text-[10px] font-medium uppercase tracking-widest"
+          class="!text-left !text-zinc-400 hover:!text-white !text-[10px] !font-medium !uppercase tracking-widest"
         >
           Reset Workspace
-        </button>
+        </Button>
       </div>
     </div>
   {/if}

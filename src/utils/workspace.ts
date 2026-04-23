@@ -1,11 +1,57 @@
 export type PanelType = 'converter' | 'formatter' | 'comparator' | 'base64-image' | 'minifier' | 'ascii-detector' | 'empty';
 
-export interface PanelState {
+export interface BasePanelState {
   id: string;
   type: PanelType;
-  data: any;
   zoom?: number;
 }
+
+export interface ConverterData {
+  formatType?: 'base64' | 'unicode' | 'url';
+  encodeInput?: string;
+  decodeInput?: string;
+}
+
+export interface FormatterData {
+  input?: string;
+  formatType?: 'json' | 'xml' | 'auto';
+  decodeOrgMsg?: boolean;
+}
+
+export interface ComparatorData {
+  original?: string;
+  modified?: string;
+}
+
+export interface Base64ImageData {
+  base64?: string;
+}
+
+export interface MinifierData {
+  input?: string;
+}
+
+export interface AsciiDetectorData {
+  input?: string;
+  detectUtf8?: boolean;
+}
+
+export type PanelDataMap = {
+  'converter': ConverterData;
+  'formatter': FormatterData;
+  'comparator': ComparatorData;
+  'base64-image': Base64ImageData;
+  'minifier': MinifierData;
+  'ascii-detector': AsciiDetectorData;
+  'empty': Record<string, never>;
+};
+
+export type PanelState = {
+  [K in PanelType]: BasePanelState & {
+    type: K;
+    data: PanelDataMap[K];
+  }
+}[PanelType];
 
 export interface WorkspaceNode {
   id: string;
@@ -23,6 +69,7 @@ export interface WorkspaceTab {
 }
 
 export interface WorkspaceState {
+  version: number;
   tabs: WorkspaceTab[];
   activeTabId: string;
 }
@@ -39,7 +86,7 @@ export const createDefaultLayout = (): WorkspaceNode => ({
     type: 'converter',
     data: {},
     zoom: 1
-  }
+  } as PanelState
 });
 
 export const createDefaultTab = (name = "Workspace"): WorkspaceTab => ({
@@ -51,6 +98,7 @@ export const createDefaultTab = (name = "Workspace"): WorkspaceTab => ({
 export const createInitialState = (): WorkspaceState => {
   const mainTab = createDefaultTab("Main");
   return {
+    version: 1,
     tabs: [mainTab],
     activeTabId: mainTab.id
   };

@@ -1,15 +1,12 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
   import { fly, fade } from 'svelte/transition';
   import { flip } from 'svelte/animate';
   import { backOut, quintOut } from 'svelte/easing';
-  import type { WorkspaceTab } from '../../utils/workspace';
   import { Plus, X } from 'lucide-svelte';
+  import { getWorkspaceStore } from '../../stores/workspace.svelte';
+  import Button from '../ui/Button.svelte';
 
-  const dispatch = createEventDispatcher();
-
-  export let tabs: WorkspaceTab[];
-  export let activeTabId: string;
+  const store = getWorkspaceStore();
 
   let editingTabId: string | null = null;
 
@@ -24,21 +21,20 @@
     <span class="text-xs font-black text-zinc-300 tracking-[0.1em] uppercase">Utility::Toolkit</span>
   </div>
 
-
   <div class="flex-1 flex items-end h-full overflow-x-auto no-scrollbar space-x-[1px]">
-    {#each tabs as tab (tab.id)}
+    {#each store.state.tabs as tab (tab.id)}
       <div 
         animate:flip={{ duration: 300, easing: quintOut }}
         in:fly={{ x: 30, duration: 400, easing: backOut }}
         out:fade={{ duration: 200 }}
         role="tab"
-        aria-selected={tab.id === activeTabId}
+        aria-selected={tab.id === store.state.activeTabId}
         tabindex="0"
-        on:click={() => dispatch('select', tab.id)}
-        on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && dispatch('select', tab.id)}
+        on:click={() => store.selectTab(tab.id)}
+        on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && store.selectTab(tab.id)}
         on:dblclick={() => editingTabId = tab.id}
         class="flex items-center h-8 px-4 rounded-t-sm border-x border-t transition-all cursor-pointer min-w-[120px] max-w-[200px] group outline-none relative
-               {tab.id === activeTabId 
+               {tab.id === store.state.activeTabId 
                  ? 'bg-[#121214] border-zinc-700 text-zinc-100 z-10 bottom-[-1px] pb-[1px]' 
                  : 'bg-zinc-900/50 border-transparent text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/80'}"
       >
@@ -48,7 +44,7 @@
             value={tab.name}
             on:blur={(e) => {
               const name = e.currentTarget.value.trim();
-              if (name) dispatch('rename', { id: tab.id, name });
+              if (name) store.renameTab(tab.id, name);
               editingTabId = null;
             }}
             on:keydown={(e) => {
@@ -62,28 +58,28 @@
           <span class="text-xs font-bold uppercase tracking-widest truncate flex-1 pointer-events-none">
             {tab.name}
           </span>
-          {#if tabs.length > 1}
-            <button 
-              on:click|stopPropagation={() => dispatch('remove', tab.id)}
-              class="ml-2 p-0.5 bg-transparent border-none text-zinc-500 hover:text-zinc-200 transition-all flex items-center justify-center shrink-0"
-              aria-label="Close tab"
+          {#if store.state.tabs.length > 1}
+            <Button variant="custom"
+              on:click={(e) => { e.stopPropagation(); store.removeTab(tab.id); }}
+              class="ml-2 p-0.5 bg-transparent border-none text-zinc-500 hover:text-zinc-200 transition-all flex items-center justify-center shrink-0 cursor-pointer"
+              ariaLabel="Close tab"
               title="Close Tab"
             >
               <X size={12} strokeWidth={2.5} aria-hidden="true" />
-            </button>
+            </Button>
           {/if}
         {/if}
       </div>
     {/each}
 
-    <button 
-      on:click={() => dispatch('add')}
-      class="flex items-center justify-center h-8 w-8 mb-0 ml-1 rounded-t-sm hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200 transition-all shrink-0 cursor-pointer"
-      aria-label="Add new workspace tab"
+    <Button variant="custom"
+      on:click={() => store.addTab()}
+      class="flex items-center justify-center h-8 w-8 mb-0 ml-1 rounded-t-sm hover:bg-zinc-800 text-zinc-500 hover:text-zinc-200 transition-all shrink-0 cursor-pointer border-none bg-transparent"
+      ariaLabel="Add new workspace tab"
       title="New Workspace"
     >
       <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
-    </button>
+    </Button>
   </div>
 </div>
 
@@ -96,3 +92,4 @@
     scrollbar-width: none;
   }
 </style>
+>

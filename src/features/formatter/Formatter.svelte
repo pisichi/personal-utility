@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from 'svelte';
-  import { slide } from 'svelte/transition';
-  import { cubicOut } from 'svelte/easing';
+  import { createEventDispatcher } from 'svelte';
   import CodeEditor from '../../editors/CodeEditor.svelte';
   import xmlFormatter from 'xml-formatter';
   import { detectFormatType } from '../../utils/formatDetector';
   import { validateXml, formatXmlWithOrgMsg } from '../../utils/xmlUtils';
-  import { ChevronDown } from 'lucide-svelte';
+  import Select from '../../components/ui/Select.svelte';
+  import Button from '../../components/ui/Button.svelte';
 
   const dispatch = createEventDispatcher();
 
@@ -23,41 +22,12 @@
 
   $: effectiveFormat = formatType === 'auto' ? (detectFormatType(input) === 'xml' ? 'xml' : 'json') : formatType;
 
-  // Dropdown logic
   const formats = [
     { value: 'auto', label: 'Auto' },
     { value: 'json', label: 'JSON' },
     { value: 'xml', label: 'XML' }
   ];
 
-  $: currentFormatLabel = formatType === 'auto' 
-    ? `Auto (${effectiveFormat.toUpperCase()})` 
-    : formats.find(f => f.value === formatType)?.label || 'Auto';
-
-  let isFormatDropdownOpen = false;
-  let formatDropdownRef: HTMLDivElement;
-
-  function toggleFormatDropdown() {
-    isFormatDropdownOpen = !isFormatDropdownOpen;
-  }
-
-  function handleFormatChange(newFormat: 'json' | 'xml' | 'auto') {
-    isFormatDropdownOpen = false;
-    formatType = newFormat;
-  }
-
-  function handleClickOutside(event: MouseEvent) {
-    if (formatDropdownRef && !formatDropdownRef.contains(event.target as Node)) {
-      isFormatDropdownOpen = false;
-    }
-  }
-
-  onMount(() => {
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  });
-
-  // Real-time syntax check
   $: {
     if (input.trim()) {
       if (effectiveFormat === 'json') {
@@ -163,40 +133,11 @@
   <div class="flex flex-wrap items-end gap-6 shrink-0 relative z-40">
     <div class="flex-1 min-w-[160px] max-w-sm">
       <label for="format-type-{instanceId}" class="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-2 opacity-80">Format Type</label>
-      
-      <div class="relative w-full" bind:this={formatDropdownRef}>
-        <button 
-          id="format-type-{instanceId}"
-          on:click|stopPropagation={toggleFormatDropdown}
-          class="flex items-center justify-between w-full border border-zinc-700 rounded-sm bg-zinc-900 hover:bg-zinc-800 text-zinc-100 text-sm px-3 py-2 transition-colors outline-none focus:border-zinc-500 cursor-pointer"
-        >
-          <span>{currentFormatLabel}</span>
-          <ChevronDown 
-            size={14} 
-            strokeWidth={3} 
-            class="text-zinc-500 transition-transform duration-200 {isFormatDropdownOpen ? 'rotate-180 text-zinc-300' : ''}" 
-          />
-        </button>
-
-        {#if isFormatDropdownOpen}
-          <div 
-            transition:slide={{ duration: 200, easing: cubicOut }}
-            class="absolute top-full left-0 mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-sm shadow-lg overflow-hidden z-50"
-          >
-            <div class="flex flex-col py-1">
-              {#each formats as fmt}
-                <button 
-                  on:click|stopPropagation={() => handleFormatChange(fmt.value as any)}
-                  class="flex items-center px-3 py-2 text-sm font-medium cursor-pointer border-none text-left transition-colors w-full
-                         {formatType === fmt.value ? 'bg-zinc-700 text-zinc-100' : 'bg-transparent text-zinc-300 hover:bg-zinc-700/50 hover:text-zinc-100'}"
-                >
-                  {fmt.label === 'Auto' ? `Auto (${effectiveFormat.toUpperCase()})` : fmt.label}
-                </button>
-              {/each}
-            </div>
-          </div>
-        {/if}
-      </div>
+      <Select 
+        options={formats.map(f => f.value === 'auto' ? { ...f, label: `Auto (${effectiveFormat.toUpperCase()})` } : f)} 
+        bind:value={formatType} 
+        id="format-type-{instanceId}"
+      />
     </div>
 
     {#if effectiveFormat === 'xml'}
@@ -207,15 +148,15 @@
     {/if}
 
     <div class="flex space-x-3 mb-1">
-      <button on:click={format} class="flex items-center space-x-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-200 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-sm shadow-sm border border-zinc-700 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed" disabled={!!syntaxError && !!input}>
+      <Button variant="primary" on:click={format} disabled={!!syntaxError && !!input}>
         <span>Format</span>
-      </button>
-      <button on:click={minify} class="flex items-center space-x-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-200 bg-zinc-800 hover:bg-zinc-700 transition-colors rounded-sm shadow-sm border border-zinc-700 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed" disabled={!!syntaxError && !!input}>
+      </Button>
+      <Button variant="primary" on:click={minify} disabled={!!syntaxError && !!input}>
         <span>Minify</span>
-      </button>
-      <button on:click={clearAll} class="flex items-center space-x-2 px-4 py-2 text-xs font-bold uppercase tracking-widest text-zinc-300 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 shadow-sm cursor-pointer transition-colors rounded-sm">
+      </Button>
+      <Button variant="secondary" on:click={clearAll}>
         <span>Clear</span>
-      </button>
+      </Button>
     </div>
   </div>
 
@@ -243,17 +184,18 @@
     <div class="flex flex-col h-full min-h-0">
       <div class="flex items-center justify-between mb-3 shrink-0 h-8 border-b border-zinc-800 pb-2">
         <h2 class="text-sm font-bold text-zinc-300 uppercase tracking-widest">Formatted Result</h2>
-        <button 
+        <Button 
+          variant="secondary"
           on:click={copyOutput} 
           disabled={!output}
-          class="flex items-center space-x-2 px-3 py-1.5 transition-all text-xs text-zinc-300 uppercase font-bold tracking-tighter rounded-sm shadow-sm border cursor-pointer {copyFeedback ? 'bg-zinc-700 border-zinc-500 text-white' : 'bg-zinc-800 border-zinc-700 hover:bg-zinc-700 disabled:opacity-30 disabled:cursor-not-allowed'}"
+          class={copyFeedback ? '!bg-zinc-700 !border-zinc-500 !text-white' : ''}
         >
           {#if copyFeedback}
             <span>Copied</span>
           {:else}
             <span>Copy</span>
           {/if}
-        </button>
+        </Button>
       </div>
       <div class="border border-zinc-700 rounded-sm overflow-hidden bg-[#282c34] flex-1 min-h-0 shadow-inner">
         <CodeEditor value={output} id="format-out-{instanceId}" lang={effectiveFormat === 'xml' ? 'xml' : 'json'} readonly={true} />
